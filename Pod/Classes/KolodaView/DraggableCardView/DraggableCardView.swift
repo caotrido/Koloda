@@ -27,6 +27,7 @@ protocol DraggableCardDelegate: class {
     func card(cardAllowedDirections card: DraggableCardView) -> [SwipeResultDirection]
     func card(cardShouldDrag card: DraggableCardView) -> Bool
     func card(cardSwipeSpeed card: DraggableCardView) -> DragSpeed
+    func cardShouldForceOnlyHorizontalScroll(_ card: DraggableCardView) -> Bool
 }
 
 //Drag animation constants
@@ -268,6 +269,25 @@ public class DraggableCardView: UIView, UIGestureRecognizerDelegate {
     
     public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
         return delegate?.card(cardShouldDrag: self) ?? true
+    }
+
+    open override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        let dragHorizontally: Bool
+
+        if let retVal = delegate?.cardShouldForceOnlyHorizontalScroll(self) {
+            dragHorizontally = retVal
+        } else {
+            dragHorizontally = true
+        }
+
+        if dragHorizontally {
+            // Block vertical scroll
+            let velocity = panGestureRecognizer.velocity(in: self)
+            if abs(velocity.y) > abs(velocity.x) {
+                return false
+            }
+        }
+        return true
     }
     
     @objc func tapRecognized(_ recogznier: UITapGestureRecognizer) {
